@@ -2,9 +2,9 @@ import 'package:email_validator/email_validator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:gap/gap.dart';
 import 'package:trace_app_3e/screens/home.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,36 +14,33 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool hidePassword = true;
+  bool showPassword = true;
   final formKey = GlobalKey<FormState>();
   final email = TextEditingController();
   final password = TextEditingController();
 
-  void toggleHidePassword() {
+  void toggleShowPassword() {
     setState(() {
-      hidePassword = !hidePassword;
+      showPassword = !showPassword;
     });
   }
 
   void login() async {
-    //validate input
+    //validate the form
     if (formKey.currentState!.validate()) {
-      //login
-      EasyLoading.show(status: 'Please wait...');
+      //proceed to login
+      EasyLoading.show(status: 'Processing...');
       await FirebaseAuth.instance
           .signInWithEmailAndPassword(
               email: email.text, password: password.text)
           .then((user) {
-        //open home
         EasyLoading.dismiss();
         Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder: (_) => HomeScreen(),
-          ),
+          CupertinoPageRoute(builder: (_) => HomeScreen()),
         );
       }).catchError((error) {
-        print(error);
-        EasyLoading.showError('Incorrect email address and/or password.');
+        print('ERROR $error');
+        EasyLoading.showError('Incorrect Username and/or Password');
       });
     }
   }
@@ -56,12 +53,12 @@ class _LoginScreenState extends State<LoginScreen> {
         centerTitle: true,
       ),
       body: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/login_back.webp'),
+            opacity: 0.4,
             alignment: Alignment.bottomCenter,
-            opacity: 0.5,
           ),
         ),
         child: Form(
@@ -69,48 +66,49 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Gap(26),
-              const Text(
-                  'Please enter your email address and password to login'),
-              const Gap(12),
+              const Gap(22),
+              const Text('Sign in your account'),
+              const Gap(16),
               TextFormField(
                 controller: email,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(),
-                  label: const Text('Email address'),
-                ),
                 validator: (value) {
-                  //if string is returned - invalid
                   if (value == null || value.isEmpty) {
-                    return 'Required. Please enter your email';
+                    return 'Required. Please enter an email address';
                   }
                   if (!EmailValidator.validate(value)) {
-                    return 'Please enter a valid email address';
+                    return 'Please enter a valid email address.';
                   }
-                  //if null is returned - valid
                   return null;
                 },
+                decoration: InputDecoration(
+                  label: Text('Email Address'),
+                  border: OutlineInputBorder(),
+                ),
               ),
               const Gap(12),
               TextFormField(
-                  controller: password,
-                  obscureText: hidePassword,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(),
-                    label: const Text('Password'),
-                    suffixIcon: IconButton(
-                      onPressed: toggleHidePassword,
-                      icon: Icon(hidePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off),
-                    ),
+                controller: password,
+                obscureText: showPassword,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Required. Please enter your password';
+                  }
+                  if (value.length <= 5) {
+                    return 'Password shoud be more than 6 characters';
+                  }
+                  return null;
+                },
+                // maxLength: 8,
+                decoration: InputDecoration(
+                  label: Text('Password'),
+                  border: OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    onPressed: toggleShowPassword,
+                    icon: Icon(
+                        showPassword ? Icons.visibility : Icons.visibility_off),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Required. Please enter your password';
-                    }
-                    return null;
-                  }),
+                ),
+              ),
               const Gap(12),
               ElevatedButton(
                 onPressed: login,
